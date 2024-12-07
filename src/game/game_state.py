@@ -4,14 +4,23 @@ from .player import AIPlayer
 from .ship import Ship
 from .enums import GamePhase
 from ..constants import SHIPS
+from ..ui.gui import BattleshipGUI
 from ..ui.console_ui import ConsoleUI
+import tkinter as tk
 
 class GameState:
-    def __init__(self):
+    def __init__(self, use_gui: bool = True):
         self.player_board = Board()
         self.computer_board = Board()
         self.ai_player = AIPlayer()
-        self.ui = ConsoleUI()
+        
+        if use_gui:
+            self.root = tk.Tk()
+            self.ui = BattleshipGUI(self.root)
+            self.ui.set_shot_callback(self._handle_player_shot)
+        else:
+            self.ui = ConsoleUI()
+            
         self.current_phase = GamePhase.SETUP
         self.winner = None
 
@@ -19,29 +28,54 @@ class GameState:
         """Main game loop"""
         self.setup_game()
         
-        while self.current_phase == GamePhase.PLAYING:
-            # Display game state
-            self.ui.display_boards(self.player_board, self.computer_board)
+        if isinstance(self.ui, BattleshipGUI):
+            self._update_display()
+            self.root.mainloop()
+        else:
+            while self.current_phase == GamePhase.PLAYING:
+                self._console_game_loop()
+
+    def _update_display(self):
+        """Update the GUI display"""
+        if isinstance(self.ui, BattleshipGUI):
+            # Show player's board with ships visible
+            self.ui.draw_board(self.ui.player_canvas, self.player_board, hide_ships=False)
+            # Hide computer's ships, only show hits and misses
+            self.ui.draw_board(self.ui.computer_canvas, self.computer_board, hide_ships=True)   
+
+    def _handle_player_shot(self, x: int, y: int):
+        """Handle a shot from the GUI"""
+        if self.current_phase != GamePhase.PLAYING:
+            return
             
-            # Player's turn
-            hit, message = self.player_turn()
-            if message:
-                self.ui.show_message(message)
-            if self.current_phase == GamePhase.GAME_OVER:
-                break
-                
-            # Computer's turn
-            hit, message = self.computer_turn()
-            if message:
-                self.ui.show_message(message)
-                
-        self.ui.show_game_over(self.winner)
+        if (x, y) in self.computer_board.shots:
+            self.ui.show_message("You already shot there!")
+            return
+            
+        hit, message = self.player_turn(x, y)
+        if message:
+            self.ui.show_message(message)
+            
+        if self.current_phase == GamePhase.GAME_OVER:
+            self._update_display()
+            return
+            
+        # Computer's turn
+        hit, message = self.computer_turn()
+        if message:
+            self.ui.show_message(message)
+            
+        self._update_display()
 
     def setup_game(self):
         """Handle game setup phase"""
         # Player ship placement
         for ship_name, length in SHIPS.items():
-            self.ui.display_boards(self.player_board, self.computer_board)
+            if isinstance(self.ui, ConsoleUI):
+                self.ui.display_boards(self.player_board, self.computer_board)
+            else:
+                self._update_display()
+            
             while True:
                 coordinates = self.ui.get_ship_placement(ship_name, length)
                 ship = Ship(ship_name, length, coordinates)
@@ -53,13 +87,10 @@ class GameState:
         self._setup_computer_ships()
         self.current_phase = GamePhase.PLAYING
 
-    def player_turn(self) -> Tuple[bool, Optional[str]]:
+    def player_turn(self, x: int, y: int) -> Tuple[bool, Optional[str]]:
         """Handle player's turn"""
-        while True:
-            x, y = self.ui.get_shot_input()
-            if (x, y) not in self.computer_board.shots:
-                break
-            self.ui.show_message("You already shot there! Try again.")
+        if (x, y) in self.computer_board.shots:
+            return False, "You already shot there! Try again."
 
         hit = self.computer_board.receive_shot(x, y)
         if hit:
