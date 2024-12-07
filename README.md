@@ -1,13 +1,27 @@
 # Battleship Game
 
-A command-line implementation of the classic Battleship game where you play against an AI opponent.
+This is a Python implementation of the classic Battleship game, featuring both graphical and console interfaces. Challenge an AI opponent that employs intelligent targeting strategies using a hunt/target strategy, where RNG is used to determine the initial target then the AI will target the same cell until it is hit or missed.
+
+## Features
+
+- Graphical User Interface (GUI) using tkinter
+- Console-based interface option
+- Smart AI opponent with hunt/target strategy
+- Interactive ship placement
+- Real-time game feedback
+
+## Requirements
+
+- Python 3.7 or higher
+- tkinter (typically included with Python)
+- pytest (for running tests)
 
 ## Setup & Installation
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
-   cd battleship
+   git clone https://github.com/TRic769/Battleship_2
+   cd Battleship_2
    ```
 
 2. Create a virtual environment (optional but recommended):
@@ -16,27 +30,19 @@ A command-line implementation of the classic Battleship game where you play agai
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. Install requirements:
+3. Install the required packages:
    ```bash
    pip install -r requirements.txt
    ```
 
 ## Running the Game
 
-Run the game using:
+### GUI Mode (Default)
+
+To start the game in GUI mode, run:
 ```bash
 python -m src
 ```
 
-## How to Play
-
-1. Place your ships by entering:
-   - Start position (row,col format, e.g., "3,4")
-   - Direction (h for horizontal, v for vertical)
-
-2. During your turn:
-   - Enter coordinates to fire (row,col format)
-   - X marks a hit, O marks a miss
-   - S shows your ships, ~ shows water
-
-3. The game continues until all ships of one player are sunk.
+### Console Mode
+Edit `src/__main__.py` and set `use_gui=False` in the GameState initialization.
