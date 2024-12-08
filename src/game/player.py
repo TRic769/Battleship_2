@@ -16,6 +16,7 @@ class AIPlayer:
         self.hits: List[Tuple[int, int]] = []
         self.hunt_mode = False
         self.last_hit: Optional[Tuple[int, int]] = None
+        self.first_hit = 0
         self.current_direction: Optional[Direction] = None
         self.potential_directions: List[Direction] = []
 
@@ -36,6 +37,10 @@ class AIPlayer:
             
             if len(self.hits) == 1:  # First hit on a ship
                 self.potential_directions = list(Direction)
+                self.last_hit = self.first_hit    #Move the pointer to the first_hit
+                if self.potential_directions:
+                    self.potential_directions.pop()   #Skip one direction 
+
         else:
             if self.hunt_mode and self.current_direction:
                 # Miss while hunting - try next direction
@@ -75,6 +80,7 @@ class AIPlayer:
 
         # If we can't continue in current direction, try opposite direction from first hit
         self.current_direction = None
+        self.hits.clear() #The ship is sunk
         return self._targeted_shot()
 
     def _get_next_position(self, pos: Tuple[int, int], direction: Direction) -> Optional[Tuple[int, int]]:
